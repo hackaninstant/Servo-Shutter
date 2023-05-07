@@ -7,7 +7,7 @@ Features:
 
 - small footprint: will work with Mega 168 boards
 - 4 button operation
-- uses SSD1306 display
+- uses I2C 128x64 SSD1306 display
 - shutter speeds from 1/8 to 10 minutes
 - cancelable self timer
 - built in servo angle adjustments for Shutter Open, Close, and relief
@@ -21,6 +21,24 @@ Requirements:
 - 4 momentary switches
 - I2C SSD1306 display
 - 9g servo
+
+Configuration:
+
+Nano:
+- D3: Minus Switch
+- D4: Plus Switch
+- D5: Shutter Switch
+- D6: Menu Switch
+- D9: Servo data
+- A4: SDA on I2C SSD1306
+- A5: SDL on I2C SSD1306
+- 5V: 5V on I2C SSD1306
+- GND: GND on I2C SSD1306, GND on servo
+
+Servo:
+- Data: D9 on Nano
+- VCC: 6 volts separate power supply
+- GND: GND on power supply and Nano
 
 This project uses SSD1306ASCII.h since graphics aren't needed and the libraries are smaller. The code is easily configurable to different pin layouts and servo angle defaults.
 
