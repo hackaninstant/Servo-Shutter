@@ -5,14 +5,14 @@ This project was designed for a 3D printed servo operated leaf shutter and Ardui
 
 Features: 
 
-- small footprint: will work with Mega 168 boards
+- small footprint: will work with Nano Mega 168 boards
 - 4 button operation
 - uses I2C 128x64 SSD1306 display
 - shutter speeds from 1/8 to 10 minutes
 - cancelable self timer
-- built in servo angle adjustments for Shutter Open, Close, and relief
-- adjustable button delay
-- Operates on 6 volts (4AA)
+- built in servo adjustments for Shutter Open, Close, and relief angles, as well as servo delay
+- adjustable button repeat rate delay
+- Operates on 6 volts (4AA), or a couple of 3.7v lithium batteries
 
 Requirements:
 
@@ -37,14 +37,14 @@ Nano:
 
 Servo:
 - Data: D9 on Nano
-- VCC: 6 volts separate power supply
+- VCC: 6-8 volts separate power supply
 - GND: GND on power supply and Nano
 
-This project uses SSD1306ASCII.h since graphics aren't needed and the libraries are smaller. The code is easily configurable to different pin layouts and servo angle defaults.
+This project uses SSD1306ASCII.h for the display since graphics aren't needed and the libraries are smaller. The code is easily configurable to different pin layouts and servo angle defaults and is documented for modification. 
 
 To Operate:
 
-After powering up, the shutter will open for focusing/composing. Press the shutter button to close the shutter to ready for exposure.
+After powering up, the shutter will open for focusing/composing. Press the shutter button to close the shutter to ready it for exposure.
 
 Select the shutter speed by pressing the plus or minus buttons. TIME is selected by navigating one less than 1/8. 
 
@@ -57,9 +57,10 @@ While in the self timer menu, the plus and minus buttons will modify the self ti
 While in the shutter adjust menu, pressing the shutter button will select between the options. Then, pressing the plus and minus buttons will modify the value of the option next to the asterisk:
 1. Shutter Close is the angle of the servo with the shutter closed
 2. Shutter Open is the angle of the servo with the shutter open
-3. Shutter Relief is the angle the servo backs off after opening or closing the shutter. This is to prevent the servo from vibrating if the shutter is stiff
+3. Shutter Relief is the angle the servo backs off after opening or closing the shutter. This is to prevent the servo from vibrating if the shutter ias stiff
 4. Button Delay is the value in milliseconds of how fast the buttons repeat if held down. 
+5. Servo Delay is the value in milliseconds of long the shutter will be open. It helps compensate for the delay server speed in opening/closing the shutter.
 
-These fine adjustments enable you to tweak the servo settings since it's difficult to perfectly install the servo at the exact angle. 
+These fine adjustments enable you to tweak the servo settings without having to modify the code and connect it to a computer since it's difficult to perfectly install the servo at the exact angle. 
 
-All settings are saved to eeprom when changed, except for the self timer. 
+All settings are saved to eeprom when changed, except for the self timer by design, since self timers usually reset on normal cameras when powered off. 
