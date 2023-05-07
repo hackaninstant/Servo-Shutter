@@ -1,5 +1,5 @@
 # Servo-Shutter
-A Servo operated 3D Printed Shutter
+A Servo operated 3D Printed Shutter for Arduino Nano
 
 This project was designed for a 3D printed servo operated leaf shutter and Arduino Nano. Being servo operated means the top shutter speed is limited to the speed of the servo motor. Since most 9g servos operate around 100ms, the shutter will be limited to around 1/8 second, which works for my purposes in exposing paper and lith negatives. 
 
@@ -57,10 +57,10 @@ While in the self timer menu, the plus and minus buttons will modify the self ti
 While in the shutter adjust menu, pressing the shutter button will select between the options. Then, pressing the plus and minus buttons will modify the value of the option next to the asterisk:
 1. Shutter Close is the angle of the servo with the shutter closed
 2. Shutter Open is the angle of the servo with the shutter open
-3. Shutter Relief is the angle the servo backs off after opening or closing the shutter. This is to prevent the servo from vibrating if the shutter ias stiff
+3. Shutter Relief is the angle the servo backs off after opening or closing the shutter. This is to prevent the servo from vibrating if the shutter is stiff
 4. Button Delay is the value in milliseconds of how fast the buttons repeat if held down. 
-5. Servo Delay is the value in milliseconds of long the shutter will be open. It helps compensate for the delay server speed in opening/closing the shutter.
+5. Servo Delay is the value in milliseconds that will be subtracted from the exposure time to compensate for how long it takes for the servo to open the shutter blades.
 
-These fine adjustments enable you to tweak the servo settings without having to modify the code and connect it to a computer since it's difficult to perfectly install the servo at the exact angle. 
+These fine adjustments enable you to tweak the servo settings without having to modify the code and upload it from a computer since it's difficult to perfectly install the servo at the exact angle. 
 
 All settings are saved to eeprom when changed, except for the self timer by design, since self timers usually reset on normal cameras when powered off. 
