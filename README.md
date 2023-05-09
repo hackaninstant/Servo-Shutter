@@ -32,10 +32,10 @@ Nano:
 - D5: Shutter Switch
 - D6: Menu Switch
 - D9: Servo data
-- D10: Opto Isolator of some sort with resistor
+- D10: Opto Isolator of some sort with matching resistor
 - A4: SDA on I2C SSD1306
 - A5: SDL on I2C SSD1306
-- 5V: 5V on I2C SSD1306
+- 5V: 5V on I2C SSD1306 and power, can be as low as 2.5 volts
 - GND: GND on I2C SSD1306, GND on servo
 
 Servo:
@@ -55,16 +55,16 @@ Press the shutter button to open the shutter for the specified time. If TIME is 
 
 Press the menu button to select between the self timer, shutter adjust, and main screen.
 
-While in the self timer menu, the plus and minus buttons will modify the self timer value. Pressing the Shutter button will open the shutter for focusing/composing.
+While in the self timer menu, the plus and minus buttons will modify the self timer value. Pressing the Shutter button will open the shutter for focusing/composing and/or close it to get it ready to shoot.
 
 While in the shutter adjust menu, pressing the shutter button will select between the options. Then, pressing the plus and minus buttons will modify the value of the option next to the asterisk:
 1. Shutter Close is the angle of the servo with the shutter closed
 2. Shutter Open is the angle of the servo with the shutter open
 3. Shutter Relief is the angle the servo backs off after opening or closing the shutter. This is to prevent the servo from vibrating if the shutter is stiff
 4. Button Delay is the value in milliseconds of how fast the buttons repeat if held down. 
-5. Servo Delay is the value in milliseconds it takes to fully open the shutter. This value is subtracted from the shutter speed and used to calculate the flash sync. It cannot be higher than the fastest shutter speed. 
+5. Servo Delay is the value in milliseconds it takes to fully open the shutter. This value is subtracted from the shutter speed and used to calculate the flash sync. It cannot be higher than the fastest shutter speed (default 125ms, or 1/8 second).  
 6. Flash Sync X is 0, meaning the flash will go off when the shutter is completely open. Flash Sync M is 20, which will be subtracted from the servo delay to fire the flash 20ms before the shutter is completely open. 
 
-These fine adjustments enable you to tweak the servo settings without having to modify the code and upload it from a computer since it's difficult to perfectly install the servo at the exact angle. 
+These fine adjustments enable you to tweak the servo settings without having to modify the code and upload it from a computer since it's difficult to perfectly install the servo at the exact angle, and the relief angle can help reduce strain on the servo if the shutter is stiff. 
 
 All settings are saved to eeprom when changed, except for the self timer by design, since self timers usually reset on normal cameras when powered off. 
