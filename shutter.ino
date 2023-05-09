@@ -1,4 +1,3 @@
-
 #include <Wire.h>
 #include "SSD1306Ascii.h"
 #include "SSD1306AsciiWire.h"
@@ -13,12 +12,17 @@ SSD1306AsciiWire oled;
 
 // Create a new servo object:
 Servo myservo;
-#define servoPin 9
 
+// Output pins:
+#define servoPin                9                        // for servo
+#define FlashSyncPin            10                       // for flash sync opto isolator
+
+// Input pins:
 #define PlusButtonPin           3                       // Plus button pin
 #define MinusButtonPin          4                       // Minus button pin
 #define ShutterButtonPin        5                       // shutter button pin
 #define MenuButtonPin           6                       // menu button pin
+
 
 boolean PlusButtonState;                // "+" button state
 boolean MinusButtonState;               // "-" button state
@@ -36,6 +40,7 @@ boolean adjustmenu = false;
 #define ShutterReliefAddr       4
 #define ButtonDelayAddr         5
 #define ServoDelayAddr          6
+#define FlashSyncAddr           7
 
 // default values if running for the first time
 #define defaultShutterOpen      68        // shutter open angle
@@ -43,22 +48,25 @@ boolean adjustmenu = false;
 #define defaultShutterRelief    4         // angle that servo backs off after opening/closing
 #define defaultButtonDelay      100       // button repeat delay
 #define defaultShutterSpeedIndex 10       // default shutter spped
-#define defaultServoDelay       10        // compensates for servo speed
-#define MaxShutterIndex         45        // matches number if items in spvalues
+#define defaultServoDelay       100       // time it takes to completely open shutter
+#define defaultFlashSync        0         // 0 = X, 20 = M, amount to subtract from ServoDelay for flash syne
+#define MaxShutterIndex         45        // matches number of items in spvalues
 
 // load values from EEPROM
 uint8_t ShutterSpeedIndex =   EEPROM.read(ShutterSpeedAddr);
-uint8_t ShutterOpen =   EEPROM.read(ShutterOpenAddr);
-uint8_t ShutterClose =   EEPROM.read(ShutterCloseAddr);
-uint8_t ShutterRelief =   EEPROM.read(ShutterReliefAddr);
-uint8_t buttondelay =   EEPROM.read(ButtonDelayAddr);
-uint8_t ServoDelay =   EEPROM.read(ServoDelayAddr);
+uint8_t ShutterOpen =         EEPROM.read(ShutterOpenAddr);
+uint8_t ShutterClose =        EEPROM.read(ShutterCloseAddr);
+uint8_t ShutterRelief =       EEPROM.read(ShutterReliefAddr);
+uint8_t buttondelay =         EEPROM.read(ButtonDelayAddr);
+uint8_t ServoDelay =          EEPROM.read(ServoDelayAddr);
+uint8_t FlashSync =           EEPROM.read(FlashSyncAddr);
 
-int ShutterState = 0;  //closed
+int ShutterState = 0;   //closed
 int selftimer = 0;      // self time in seconds
 int adjustmenuitem = 1;  // selected adjust menu item
+float voltage = 0;      // for storing voltage of battery
 
-// Shutter speed values in seconds. .001 = TIME setting
+// Shutter speed values in seconds. .001 = TIME setting. If you add/delete, modify MaxShutterIndex
 float spvalues[] = {.001, .125, .150, .200, .250, .300, .400, .500, .600, .800, 1.000, 1.250, 1.500, 2.000, 2.500, 3.000, 4.000, 5.000, 6.000, 7.000, 8.000, 9, 10, 11, 12, 13, 14, 15.00, 20.00, 25.00, 30.00, 35.00, 40.00, 45.00, 60.00, 90.00, 120.0, 150.0, 180.0, 240.0, 300.0, 360.0, 420.0, 480.0, 540.0, 600.0};
 
 // Store settings
@@ -69,6 +77,7 @@ void SaveSettings() {
   EEPROM.write(ShutterReliefAddr, ShutterRelief);
   EEPROM.write(ButtonDelayAddr, buttondelay);
   EEPROM.write(ServoDelayAddr, ServoDelay);
+  EEPROM.write(FlashSyncAddr, FlashSync);
 }
 
 // read button state
@@ -79,7 +88,7 @@ void readButtons() {
   MenuButtonState = digitalRead(MenuButtonPin);
 }
 
-// menu routine
+// figure out what to do with button presses
 void menu() {
   
 // Menu button is pressed, cycle through menus:
@@ -132,7 +141,11 @@ void menu() {
    }  
   }
 
-// Array of conditional which changes adjust menu items
+// get fastest shutter speed delay to make sure servodelay stays below that value
+  float shutterdelay = spvalues[1];
+  shutterdelay = shutterdelay * 1000;        // time in milliseconds
+
+// Array of conditionals which changes value of adjust menu items
   if(adjustmenu && PlusButtonState == 0 && adjustmenuitem == 1) {
       ShutterOpen++;
       clearadjustitem(1);
@@ -153,10 +166,20 @@ void menu() {
       clearadjustitem(4);
       oled.print(buttondelay);
   } 
-  if(adjustmenu && PlusButtonState == 0 && adjustmenuitem == 5) {
+  if(adjustmenu && PlusButtonState == 0 && adjustmenuitem == 5 && ServoDelay < shutterdelay) {
       ServoDelay++;
       clearadjustitem(5);
       oled.print(ServoDelay);
+  }   
+  if(adjustmenu && PlusButtonState == 0 && adjustmenuitem == 6) {
+      clearadjustitem(6);
+      if (FlashSync == 0) {
+        FlashSync = 20; 
+        oled.print(F("M"));
+      } else {
+        FlashSync = 0;        
+        oled.print(F("X"));
+      }
   }   
   if(adjustmenu && MinusButtonState == 0 && adjustmenuitem == 1) {
       ShutterOpen--;
@@ -178,19 +201,28 @@ void menu() {
       clearadjustitem(4);
       oled.print(buttondelay);
   }
-  if(adjustmenu && MinusButtonState == 0 && adjustmenuitem == 5) {
+  if(adjustmenu && MinusButtonState == 0 && adjustmenuitem == 5 && ServoDelay > 0) {
       ServoDelay--;
       clearadjustitem(5);
       oled.print(ServoDelay);
   }   
-
+if(adjustmenu && MinusButtonState == 0 && adjustmenuitem == 6) {
+      clearadjustitem(6);
+      if (FlashSync == 0) {
+        FlashSync = 20; 
+        oled.print(F("M"));
+      } else {
+        FlashSync = 0;        
+        oled.print(F("X"));
+      }
+  }     
 }
 
 // clear and get ready to display adjust value
 void clearadjustitem(int adjust) {
-  oled.setCursor(94, adjust + 2);
+  oled.setCursor(94, adjust + 1);
   oled.print(F("    "));
-  oled.setCursor(94, adjust + 2);
+  oled.setCursor(94, adjust + 1);
   SaveSettings();
   delay(200);
 }
@@ -209,7 +241,7 @@ void showtimermenu() {
   if(selftimer == 0) {            // self timer not active
     oled.print(F("OFF"));
   } else {
-  oled.print(selftimer);
+  oled.print(selftimer);          // show self timer value
   oled.print(F(" sec"));
   }
   delay(buttondelay);             // button repeat rate
@@ -225,22 +257,29 @@ void showadjustmenu() {
   oled.setCursor(10, 0);
   oled.print(F("Shutter Adjust:"));
   oled.set1X();
-  oled.setCursor(22, 3);
-  oled.print(F("Open Angle: "));        // display the 5 items
+  oled.setCursor(22, 2);                // characters are 6 pixels wide including space
+  oled.print(F("Open Angle: "));        // display the 5 adjustable items
   oled.print(ShutterOpen);
-  oled.setCursor(16, 4);
+  oled.setCursor(16, 3);
   oled.print(F("Close Angle: "));
   oled.print(ShutterClose);
-  oled.setCursor(10, 5);
+  oled.setCursor(10, 4);                // make the titles justified right
   oled.print(F("Relief Angle: "));
   oled.print(ShutterRelief);
-  oled.setCursor(10, 6);
+  oled.setCursor(10, 5);
   oled.print(F("Button Delay: "));
   oled.print(buttondelay);
-  oled.setCursor(16, 7);
+  oled.setCursor(16, 6);
   oled.print(F("Servo Delay: "));
   oled.print(ServoDelay);
-  oled.setCursor(0, adjustmenuitem + 2);    // display the asterisk beside the item selected
+  oled.setCursor(22, 7);
+  oled.print(F("Flash Sync: "));
+  if(FlashSync == 0) {
+    oled.print(F("X"));
+  } else {
+    oled.print(F("M"));
+  }
+  oled.setCursor(0, adjustmenuitem + 1);    // display an asterisk beside the selected item
   oled.print(F("*"));
   delay(buttondelay);
 }
@@ -249,8 +288,8 @@ void printdivider(int row) {                // prints a divider
   oled.set1X();
   oled.setCursor(0, row);
   int count = 1;
-  while (count < 22) {
-    oled.print(F("-"));
+  while (count < 23) {                      // 22 characters wide
+    oled.print(F("-"));                     // choose your divider character...
    count++;
   }
 }
@@ -280,8 +319,11 @@ void refresh() {
   // Start main display
   oled.clear();
   oled.set1X();
-  oled.setCursor(10, 0);
-  oled.print(F("Shutter Control:"));
+  oled.setCursor(0, 0);
+  oled.print(F("Shutter Control |"));
+  oled.setCursor(105, 0);
+  oled.print(voltage, 1);
+  oled.print(F("v"));
   printdivider(1);
   oled.set1X();
   oled.setCursor(40, 2);
@@ -364,7 +406,7 @@ boolean useselftimer(int stimer) {        // self timer routine, sends back an a
   while(stimer > 0) {                     // stimer in seconds
     int countdown = 100;                  // for counting down 1 second
     oled.setCursor(0, 4);
-    oled.print(F("          "));          // clear self timer value row
+    oled.print(F("           "));          // clear self timer value row
     oled.setCursor(0, 4);
     while(countdown > 0) {  
       oled.print(stimer);                 // display self timer value
@@ -390,6 +432,7 @@ pinMode(PlusButtonPin, INPUT_PULLUP);         // setup buttons to pins
 pinMode(MinusButtonPin, INPUT_PULLUP);
 pinMode(ShutterButtonPin, INPUT_PULLUP);
 pinMode(MenuButtonPin, INPUT_PULLUP);
+pinMode(FlashSyncPin, OUTPUT);                // setup flash sync output to opto isolator
 
 Wire.begin();
 myservo.attach(servoPin);
@@ -417,9 +460,22 @@ if (ShutterClose > 90) {
 if (ServoDelay > 250) {
   ServoDelay = defaultServoDelay;
 }
-refresh();
-
+if (FlashSync > 20) {
+  FlashSync = defaultFlashSync;
 }
+
+// get voltage
+const long InternalReferenceVoltage = 1056L;  // Adjust this value to your boards specific internal BG voltage x1000
+ADMUX = (0 << REFS1) | (1 << REFS0) | (0 << ADLAR) | (1 << MUX3) | (1 << MUX2) | (1 << MUX1) | (0 << MUX0);
+delay(100);  // Let mux settle a little to get a more stable A/D conversion
+ADCSRA |= _BV( ADSC );
+while ( ( (ADCSRA & (1 << ADSC)) != 0 ) );
+voltage = (((InternalReferenceVoltage * 1024L) / ADC) + 5L) / 10L; // calculates for straight line value
+voltage = voltage/100;
+
+refresh();  // display main screen
+}
+
 void loop() {
 
 readButtons();                          // get button state
@@ -428,7 +484,7 @@ menu();                                 // do stuff with button press
 // shutter button pressed during self timer menu
 if(ShutterButtonState == 0 && selftimermenu) { 
     myservo.write(ShutterOpen);         // open the shutter for focus, viewing
-    delay(200);
+    delay(1000);
     readButtons();
     myservo.write(ShutterOpen - ShutterRelief);
     ShutterState = 1;
@@ -439,13 +495,13 @@ if(ShutterButtonState == 0 && selftimermenu) {
 if(ShutterButtonState == 0 && adjustmenu) {
   delay(300);                                 // wait enough time to release shutter button
   readButtons();                              // clear the buttons
-  oled.setCursor(0, adjustmenuitem + 2);
+  oled.setCursor(0, adjustmenuitem + 1);
   oled.print(F(" "));                         // clear adjust option item
   adjustmenuitem++;                           // go to next adjust menu item
-  if(adjustmenuitem > 5) {                    // cycle back to first item 
+  if(adjustmenuitem > 6) {                    // cycle back to first item 
     adjustmenuitem = 1;
   }
-  oled.setCursor(0, adjustmenuitem + 2);
+  oled.setCursor(0, adjustmenuitem + 1);
   oled.print(F("*"));                         // Item selection indicator
 }
 
@@ -462,16 +518,20 @@ if(ShutterButtonState == 0) {
    abort = useselftimer(selftimer);  // go to self timer routine
    if (!abort) {                      // if self timer hasn't been aborted
    float shutterdelay = spvalues[ShutterSpeedIndex];
-   shutterdelay = shutterdelay * 1000;  // time in milliseconds
+   shutterdelay = shutterdelay * 1000;        // time in milliseconds
+   shutterdelay = shutterdelay - ServoDelay;  // subtract flashsync time from total  
    ShutterState = 1;
    showshutterstate(ShutterState);
    myservo.write(ShutterOpen);
-    if(shutterdelay > 1000 ) {        // shutter relief is time is over a second
-     delay(200);
+   delay(ServoDelay - FlashSync);    // wait until flash sync delay
+   analogWrite(FlashSyncPin, 255);   // activate opto isolator for flash 
+   delay(FlashSync);                 // delay the rest of the time to add up to ServoDelay
+    if(shutterdelay > 1000 ) {       // shutter relief if time is over a second
+     delay(50);                      // an extra .05 seconds shouldn't matter in exposures over 1 second
      myservo.write(ShutterOpen - ShutterRelief);
     }
    if(shutterdelay > 1) {             // 1 = Timer mode
-    delay(shutterdelay - ServoDelay);  // OPEN Shutter for exposure            
+    delay(shutterdelay);              // OPEN Shutter for exposure            
    } else {
     delay(500);       // wait until shutter button is released
     readButtons();   // clear button state
@@ -479,6 +539,7 @@ if(ShutterButtonState == 0) {
       readButtons();              // wait here until shutter button pressed. 
     }
    }
+  analogWrite(FlashSyncPin, 0);    // shut off flash sync opto isolator
    myservo.write(ShutterClose);
    delay(200);
    myservo.write(ShutterClose + ShutterRelief);
