@@ -481,20 +481,25 @@ void loop() {
 readButtons();                          // get button state
 menu();                                 // do stuff with button press
 
-// shutter button pressed during self timer menu
-if(ShutterButtonState == 0 && selftimermenu) { 
+// shutter button pressed during self timer menu and the shutter is closed
+if(!ShutterButtonState && selftimermenu && ShutterState == 0) { 
     myservo.write(ShutterOpen);         // open the shutter for focus, viewing
-    delay(1000);
-    readButtons();
+    while (!ShutterButtonState) {       // as long as the shutter button is pressed...
+      delay(100);                       // wait another 100 ms
+      readButtons();                    // then read the buttons again
+    }
+    delay(200);                         // wait until shutter opens
     myservo.write(ShutterOpen - ShutterRelief);
     ShutterState = 1;
     showshutterstate(3);    // open shutter for focus
 }
 
 // shutter button pressed during adjust menu
-if(ShutterButtonState == 0 && adjustmenu) {
-  delay(300);                                 // wait enough time to release shutter button
-  readButtons();                              // clear the buttons
+if(!ShutterButtonState && adjustmenu) {
+  while (!ShutterButtonState) {                // wait until Shutter button is released
+    delay(100);
+    readButtons();                            // try reading the buttons again
+  }
   oled.setCursor(0, adjustmenuitem + 1);
   oled.print(F(" "));                         // clear adjust option item
   adjustmenuitem++;                           // go to next adjust menu item
@@ -506,7 +511,7 @@ if(ShutterButtonState == 0 && adjustmenu) {
 }
 
 // shutter button pressed
-if(ShutterButtonState == 0) {
+if(!ShutterButtonState) {
   boolean abort = false;
   if(ShutterState == 1) {           // If the shutter is open, close it
     myservo.write(ShutterClose);
