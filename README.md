@@ -43,7 +43,7 @@ Servo:
 - VCC: 6-8 volts separate power supply
 - GND: GND on power supply and Nano
 
-This project uses SSD1306ASCII.h for the display since graphics aren't needed and the libraries are smaller. The code is easily configurable to different pin layouts and servo angle defaults and is documented for modification. 
+This project uses SSD1306ASCII.h for the display since graphics aren't needed and the libraries are smaller. The code is easily configurable to different pin layouts and servo angle defaults and is documented for modification. Flash sync has been coded but not tested and uses a theoretical opto isolator. 
 
 To Operate:
 
