@@ -408,8 +408,13 @@ boolean useselftimer(int stimer) {        // self timer routine, sends back an a
     oled.setCursor(0, 4);
     oled.print(F("           "));          // clear self timer value row
     oled.setCursor(0, 4);
-    while(countdown > 0) {  
-      oled.print(stimer);                 // display self timer value
+     oled.print(stimer);                 // display self timer value
+    while(countdown > 0) {
+      if(stimer > 9) {
+        oled.print(stimer % 10);          // display 10s column, then remainder if over 10 seconds
+      } else {
+        oled.print(stimer);
+      }
       countdown = countdown - 10;         // reduce counter by 1/10
       delay(100);                         // wait 1/10 second
       readButtons();                      // read button state 
@@ -550,9 +555,13 @@ if(!ShutterButtonState) {
    myservo.write(ShutterClose + ShutterRelief);
    ShutterState=0;
    showshutterstate(ShutterState);
-  } 
+  }
+  while (!ShutterButtonState) {       // as long as the shutter button is pressed...
+    delay(100);                       // wait another 100 ms
+    readButtons();                    // then read the buttons again
+  }
+
   refresh();
-  delay(1000);        // wait a second so the shutter can't open twice
  }
 }
 }
