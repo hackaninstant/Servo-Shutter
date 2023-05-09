@@ -12,6 +12,7 @@ Features:
 - cancelable self timer
 - built in servo adjustments for Shutter Open, Close, and relief angles, as well as servo delay
 - adjustable button repeat rate delay
+- X or M flash sync (untested)
 - Operates on 6 volts (4AA), or a couple of 3.7v lithium batteries
 
 Requirements:
@@ -21,6 +22,7 @@ Requirements:
 - 4 momentary switches
 - I2C SSD1306 display
 - 9g servo
+- Opto isolator with resistor (Optional for flash sync)
 
 Configuration:
 
@@ -30,6 +32,7 @@ Nano:
 - D5: Shutter Switch
 - D6: Menu Switch
 - D9: Servo data
+- D10: Opto Isolator of some sort with resistor
 - A4: SDA on I2C SSD1306
 - A5: SDL on I2C SSD1306
 - 5V: 5V on I2C SSD1306
@@ -59,7 +62,8 @@ While in the shutter adjust menu, pressing the shutter button will select betwee
 2. Shutter Open is the angle of the servo with the shutter open
 3. Shutter Relief is the angle the servo backs off after opening or closing the shutter. This is to prevent the servo from vibrating if the shutter is stiff
 4. Button Delay is the value in milliseconds of how fast the buttons repeat if held down. 
-5. Servo Delay is the value in milliseconds that will be subtracted from the exposure time to compensate for how long it takes for the servo to open the shutter blades.
+5. Servo Delay is the value in milliseconds it takes to fully open the shutter. This value is subtracted from the shutter speed and used to calculate the flash sync
+6. Flash Sync X is 0, meaning the flash will go off when the shutter is completely open. Flash Sync M is 20, which will be subtracted from the servo delay to fire the flash 20ms before the shutter is completely open. 
 
 These fine adjustments enable you to tweak the servo settings without having to modify the code and upload it from a computer since it's difficult to perfectly install the servo at the exact angle. 
 
