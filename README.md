@@ -62,7 +62,7 @@ While in the shutter adjust menu, pressing the shutter button will select betwee
 2. Shutter Open is the angle of the servo with the shutter open
 3. Shutter Relief is the angle the servo backs off after opening or closing the shutter. This is to prevent the servo from vibrating if the shutter is stiff
 4. Button Delay is the value in milliseconds of how fast the buttons repeat if held down. 
-5. Servo Delay is the value in milliseconds it takes to fully open the shutter. This value is subtracted from the shutter speed and used to calculate the flash sync
+5. Servo Delay is the value in milliseconds it takes to fully open the shutter. This value is subtracted from the shutter speed and used to calculate the flash sync. It cannot be higher than the fastest shutter speed. 
 6. Flash Sync X is 0, meaning the flash will go off when the shutter is completely open. Flash Sync M is 20, which will be subtracted from the servo delay to fire the flash 20ms before the shutter is completely open. 
 
 These fine adjustments enable you to tweak the servo settings without having to modify the code and upload it from a computer since it's difficult to perfectly install the servo at the exact angle. 
