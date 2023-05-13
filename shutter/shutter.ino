@@ -157,23 +157,28 @@ void menu() {
         ShutterOpen++;
         clearadjustitem(1);
         oled.print(ShutterOpen);
+        break;
       case(2):
         ShutterClose++;
         clearadjustitem(2);
         oled.print(ShutterClose);
+        break;
       case(3):
         ShutterRelief++;
         clearadjustitem(3);
         oled.print(ShutterRelief);
+        break;
       case(4):
-        ondelay + 10;
+        buttondelay = buttondelay + 10;
         clearadjustitem(4);
         oled.print(buttondelay);
+        break;
       case(5):
         if(ServoDelay < shutterdelay) {
           ServoDelay++;
           clearadjustitem(5);
           oled.print(ServoDelay);
+          break;
         }
       case(6):
         clearadjustitem(6);
@@ -183,33 +188,39 @@ void menu() {
         } else {
           FlashSync = 0;        
           oled.print(F("X"));
+          break;
         }
     }
-  } else if(adjustmenu && PlusButtonState == 1) {
+  } else if(adjustmenu && MinusButtonState == 0) {
     // Now Switch check on adjustmenuitem
     // int adjustmenuitem 1-6
     switch(adjustmenuitem) {
       case(1):
         ShutterOpen--;
         clearadjustitem(1);
-        oled.print(ShutterOpen)
+        oled.print(ShutterOpen);
+        break;
       case(2):
         ShutterClose--;
         clearadjustitem(2);
         oled.print(ShutterClose);
+        break;
       case(3):
         ShutterRelief--;
         clearadjustitem(3);
         oled.print(ShutterRelief);
+        break;
       case(4):
         buttondelay = buttondelay - 10;
         clearadjustitem(4);
         oled.print(buttondelay);
+        break;
       case(5):
         if(ServoDelay > 0) {
           ServoDelay--;
           clearadjustitem(5);
           oled.print(ServoDelay);
+          break;
         }
              
       case(6):
@@ -220,10 +231,11 @@ void menu() {
         } else {
           FlashSync = 0;        
           oled.print(F("X"));
+          break;
         }     
     }
   }
-
+}
 // clear and get ready to display adjust value
 void clearadjustitem(int adjust) {
   oled.setCursor(94, adjust + 1);
