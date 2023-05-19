@@ -9,19 +9,19 @@ Features:
 - 4 button operation
 - uses I2C 128x64 SSD1306 display
 - shutter speeds from 1/8 to 10 minutes
-- cancelable self timer
+- cancelable self timer up to 255 seconds
 - built in servo adjustments for Shutter Open, Close, and relief angles, as well as servo delay
 - adjustable button repeat rate delay
 - X or M flash sync (untested)
-- Operates on 6 volts (4AA), or a couple of 3.7v lithium batteries
+- Operates on 6 volts (4AA) for the servo, and 3 volts for the arduino
 
 Requirements:
 
-- 3D printed servo operated shutter from https://www.thingiverse.com/thing:4404243
-- Arduino Nano
+- 3D printed servo operated shutter from https://www.thingiverse.com/thing:6033871
+- Arduino Nano, 16K or 32K version
 - 4 momentary switches
-- I2C SSD1306 display
-- 9g servo
+- I2C SSD1306 128x64 display
+- 9g servo 
 - Opto isolator with resistor (Optional for flash sync)
 
 Configuration:
@@ -43,11 +43,11 @@ Servo:
 - VCC: 6-8 volts separate power supply
 - GND: GND on power supply and Nano
 
-This project uses SSD1306ASCII.h for the display since graphics aren't needed and the libraries are smaller. The code is easily configurable to different pin layouts and servo angle defaults and is documented for modification. Flash sync has been coded but not tested and uses a theoretical opto isolator. 
+This project uses SSD1306ASCII.h library for the display since graphics aren't needed and the libraries are smaller. The code is easily configurable to different pin layouts and servo angle defaults and is documented for modification. Flash sync has been coded but not tested and uses a theoretical opto isolator. 
 
 To Operate:
 
-After powering up, the shutter will open for focusing/composing. Press the shutter button to close the shutter to ready it for exposure.
+After powering up, the shutter will open for focusing/composing. Press the shutter button to close the shutter to ready it to pull the dark slide for exposure.
 
 Select the shutter speed by pressing the plus or minus buttons. TIME is selected by navigating one less than 1/8. 
 
