@@ -12,7 +12,7 @@ Features:
 - cancelable self timer up to 255 seconds
 - built in servo adjustments for Shutter Open, Close, and relief angles, as well as servo delay
 - adjustable button repeat rate delay
-- X or M flash sync (untested)
+- X or M flash sync (electronic flash for now)
 - Operates on 6 volts (4AA) for the servo, and 3 volts for the arduino
 
 Requirements:
@@ -22,7 +22,7 @@ Requirements:
 - 4 momentary switches
 - I2C SSD1306 128x64 display
 - 9g servo 
-- Opto isolator with resistor (Optional for flash sync)
+- TLP 127 Opto isolator with 330 Ohm resistor (Optional for flash sync)
 
 Configuration:
 
@@ -32,7 +32,7 @@ Nano:
 - D5: Shutter Switch
 - D6: Menu Switch
 - D9: Servo data
-- D10: Opto Isolator of some sort with matching resistor
+- D10: 330 Ohm resistor + TLP127 Opto Isolator
 - A4: SDA on I2C SSD1306
 - A5: SDL on I2C SSD1306
 - 5V: 5V on I2C SSD1306 and power, can be as low as 2.5 volts
@@ -43,7 +43,13 @@ Servo:
 - VCC: 6-8 volts separate power supply
 - GND: GND on power supply and Nano
 
-This project uses SSD1306ASCII.h library for the display since graphics aren't needed and the libraries are smaller. The code is easily configurable to different pin layouts and servo angle defaults and is documented for modification. Flash sync has been coded but not tested and uses a theoretical opto isolator. 
+TLP127 Opto Isolator:
+- Pin 1 (Anode): 330 Ohm resistor, then to D10
+- Pin 3 (Cathode): GND
+- Pin 4 (Emiter): GND (outside barrel) on flash PC connection
+- Pin 6 (Collector): VCC (inside barrel) on flash PC connection
+
+This project uses SSD1306ASCII.h library for the display since graphics aren't needed and the libraries are smaller. The code is easily configurable to different pin layouts and servo angle defaults and is documented for modification. The TLP127 was selected since it can handle 300v which some older electronic flashes use for flash sync. Although this has been tested with electronic flash, tests using flashbulbs failed to fire the flash. 
 
 To Operate:
 
