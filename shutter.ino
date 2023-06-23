@@ -145,79 +145,97 @@ void menu() {
   float shutterdelay = spvalues[1];
   shutterdelay = shutterdelay * 1000;        // time in milliseconds
 
-// Array of conditionals which changes value of adjust menu items
-  if(adjustmenu && PlusButtonState == 0 && adjustmenuitem == 1) {
-      ShutterOpen++;
-      clearadjustitem(1);
-      oled.print(ShutterOpen);
-  } 
-  if(adjustmenu && PlusButtonState == 0 && adjustmenuitem == 2) {
-      ShutterClose++;
-      clearadjustitem(2);
-      oled.print(ShutterClose);
-  } 
-  if(adjustmenu && PlusButtonState == 0 && adjustmenuitem == 3) {
-      ShutterRelief++;
-      clearadjustitem(3);
-      oled.print(ShutterRelief);
-  } 
-  if(adjustmenu && PlusButtonState == 0 && adjustmenuitem == 4) {
-      buttondelay = buttondelay + 10;
-      clearadjustitem(4);
-      oled.print(buttondelay);
-  } 
-  if(adjustmenu && PlusButtonState == 0 && adjustmenuitem == 5 && ServoDelay < shutterdelay) {
-      ServoDelay++;
-      clearadjustitem(5);
-      oled.print(ServoDelay);
-  }   
-  if(adjustmenu && PlusButtonState == 0 && adjustmenuitem == 6) {
-      clearadjustitem(6);
-      if (FlashSync == 0) {
-        FlashSync = 20; 
-        oled.print(F("M"));
-      } else {
-        FlashSync = 0;        
-        oled.print(F("X"));
-      }
-  }   
-  if(adjustmenu && MinusButtonState == 0 && adjustmenuitem == 1) {
-      ShutterOpen--;
-      clearadjustitem(1);
-      oled.print(ShutterOpen);
-  } 
-  if(adjustmenu && MinusButtonState == 0 && adjustmenuitem == 2) {
-      ShutterClose--;
-      clearadjustitem(2);
-      oled.print(ShutterClose);
-  } 
-  if(adjustmenu && MinusButtonState == 0 && adjustmenuitem == 3) {
-      ShutterRelief--;
-      clearadjustitem(3);
-      oled.print(ShutterRelief);
-  } 
-  if(adjustmenu && MinusButtonState == 0 && adjustmenuitem == 4) {
-      buttondelay = buttondelay - 10;
-      clearadjustitem(4);
-      oled.print(buttondelay);
+// Switch...Case statements to handle menu item adjustments -EHM 5.11.23
+  // First check for adjustmenu & PlusButtonState states. 
+  // var adjustmenu must exist
+  // int PlusButtonState 0 or 1
+  if(adjustmenu && PlusButtonState == 0) {
+    // Now Switch check on adjustmenuitem
+    // int adjustmenuitem 1-6
+    switch(adjustmenuitem) {
+      case(1):
+        ShutterOpen++;
+        clearadjustitem(1);
+        oled.print(ShutterOpen);
+        break;
+      case(2):
+        ShutterClose++;
+        clearadjustitem(2);
+        oled.print(ShutterClose);
+        break;
+      case(3):
+        ShutterRelief++;
+        clearadjustitem(3);
+        oled.print(ShutterRelief);
+        break;
+      case(4):
+        buttondelay = buttondelay + 10;
+        clearadjustitem(4);
+        oled.print(buttondelay);
+        break;
+      case(5):
+        if(ServoDelay < shutterdelay) {
+          ServoDelay++;
+          clearadjustitem(5);
+          oled.print(ServoDelay);
+          break;
+        }
+      case(6):
+        clearadjustitem(6);
+        if (FlashSync == 0) {
+          FlashSync = 20; 
+          oled.print(F("M"));
+        } else {
+          FlashSync = 0;        
+          oled.print(F("X"));
+          break;
+        }
+    }
+  } else if(adjustmenu && MinusButtonState == 0) {
+    // Now Switch check on adjustmenuitem
+    // int adjustmenuitem 1-6
+    switch(adjustmenuitem) {
+      case(1):
+        ShutterOpen--;
+        clearadjustitem(1);
+        oled.print(ShutterOpen);
+        break;
+      case(2):
+        ShutterClose--;
+        clearadjustitem(2);
+        oled.print(ShutterClose);
+        break;
+      case(3):
+        ShutterRelief--;
+        clearadjustitem(3);
+        oled.print(ShutterRelief);
+        break;
+      case(4):
+        buttondelay = buttondelay - 10;
+        clearadjustitem(4);
+        oled.print(buttondelay);
+        break;
+      case(5):
+        if(ServoDelay > 0) {
+          ServoDelay--;
+          clearadjustitem(5);
+          oled.print(ServoDelay);
+          break;
+        }
+             
+      case(6):
+        clearadjustitem(6);
+        if (FlashSync == 0) {
+          FlashSync = 20; 
+          oled.print(F("M"));
+        } else {
+          FlashSync = 0;        
+          oled.print(F("X"));
+          break;
+        }     
+    }
   }
-  if(adjustmenu && MinusButtonState == 0 && adjustmenuitem == 5 && ServoDelay > 0) {
-      ServoDelay--;
-      clearadjustitem(5);
-      oled.print(ServoDelay);
-  }   
-if(adjustmenu && MinusButtonState == 0 && adjustmenuitem == 6) {
-      clearadjustitem(6);
-      if (FlashSync == 0) {
-        FlashSync = 20; 
-        oled.print(F("M"));
-      } else {
-        FlashSync = 0;        
-        oled.print(F("X"));
-      }
-  }     
 }
-
 // clear and get ready to display adjust value
 void clearadjustitem(int adjust) {
   oled.setCursor(94, adjust + 1);
@@ -534,7 +552,7 @@ if(!ShutterButtonState) {
    showshutterstate(ShutterState);
    myservo.write(ShutterOpen);
    delay(ServoDelay - FlashSync);    // wait until flash sync delay
-   analogWrite(FlashSyncPin, 255);   // activate opto isolator for flash 
+   digitalWrite(FlashSyncPin, HIGH);   // activate opto isolator for flash 
    delay(FlashSync);                 // delay the rest of the time to add up to ServoDelay
     if(shutterdelay > 1000 ) {       // shutter relief if time is over a second
      delay(50);                      // an extra .05 seconds shouldn't matter in exposures over 1 second
@@ -549,7 +567,7 @@ if(!ShutterButtonState) {
       readButtons();              // wait here until shutter button pressed. 
     }
    }
-  analogWrite(FlashSyncPin, 0);    // shut off flash sync opto isolator
+  digitalWrite(FlashSyncPin, LOW);    // shut off flash sync opto isolator
    myservo.write(ShutterClose);
    delay(200);
    myservo.write(ShutterClose + ShutterRelief);
