@@ -22,7 +22,9 @@ Servo myservo;
 #define MinusButtonPin          4                       // Minus button pin
 #define ShutterButtonPin        5                       // shutter button pin
 #define MenuButtonPin           6                       // menu button pin
-
+#define rotButtonPin            2                       // rotary encoder switch
+#define rotCLKPin               7                       // rotary encoder clock
+#define rotDTPin                8                       // rotary encoder DT pin
 
 boolean PlusButtonState;                // "+" button state
 boolean MinusButtonState;               // "-" button state
@@ -65,6 +67,13 @@ int ShutterState = 0;   //closed
 int selftimer = 0;      // self time in seconds
 int adjustmenuitem = 1;  // selected adjust menu item
 float voltage = 0;      // for storing voltage of battery
+
+int rotcounter = 0;      // counter for rotary enocoder
+int currentStateCLK;
+int lastStateCLK;
+unsigned long lastButtonPress = 0;
+int btnState;
+boolean rotaryencoder = false; 
 
 // Shutter speed values in seconds. .001 = TIME setting. If you add/delete, modify MaxShutterIndex
 float spvalues[] = {.001, .125, .150, .200, .250, .300, .400, .500, .600, .800, 1.000, 1.250, 1.500, 2.000, 2.500, 3.000, 4.000, 5.000, 6.000, 7.000, 8.000, 9, 10, 11, 12, 13, 14, 15.00, 20.00, 25.00, 30.00, 35.00, 40.00, 45.00, 60.00, 90.00, 120.0, 150.0, 180.0, 240.0, 300.0, 360.0, 420.0, 480.0, 540.0, 600.0};
@@ -115,7 +124,7 @@ void menu() {
       }
     }
     if(PlusButtonState == 0 || MinusButtonState == 0) {
-      showtimermenu();                    // show changes in self timer
+      showtimervalue();                    // show changes in self timer
     }
   }
 
@@ -127,7 +136,7 @@ void menu() {
       } else {
        ShutterSpeedIndex++;               // Increase shutter speed time
      }
-    refresh();                            // redisplay main screen
+    refreshShutter();                            // redisplay shutter speed
     SaveSettings();
    }
     if(MinusButtonState == 0) {
@@ -136,7 +145,7 @@ void menu() {
     } else {
      ShutterSpeedIndex--;               // decrease shutter speed time
     }
-    refresh();
+    refreshShutter();
     SaveSettings();
    }  
   }
@@ -242,7 +251,10 @@ void clearadjustitem(int adjust) {
   oled.print(F("    "));
   oled.setCursor(94, adjust + 1);
   SaveSettings();
-  delay(200);
+  if(!rotaryencoder){
+  delay(buttondelay);
+  }
+  rotaryencoder = false;
 }
 
 // display self timer menu
@@ -254,7 +266,13 @@ void showtimermenu() {
   printdivider(1);
   oled.setCursor(10, 0);
   oled.print(F("Self Timer:"));
+  showtimervalue();
+}
+
+void showtimervalue() {
   oled.set2X();
+  oled.setCursor(25, 3);
+  oled.print(F("      "));
   oled.setCursor(25, 3);
   if(selftimer == 0) {            // self timer not active
     oled.print(F("OFF"));
@@ -262,9 +280,11 @@ void showtimermenu() {
   oled.print(selftimer);          // show self timer value
   oled.print(F(" sec"));
   }
+  if(!rotaryencoder){
   delay(buttondelay);             // button repeat rate
+  }
+  rotaryencoder = false; 
 }
-
 // display shutter adjust menu
 void showadjustmenu() {
   mainscreen = false;
@@ -299,7 +319,10 @@ void showadjustmenu() {
   }
   oled.setCursor(0, adjustmenuitem + 1);    // display an asterisk beside the selected item
   oled.print(F("*"));
+  if(!rotaryencoder){
   delay(buttondelay);
+  }
+  rotaryencoder = false;
 }
 
 void printdivider(int row) {                // prints a divider
@@ -317,23 +340,7 @@ void refresh() {
   mainscreen = true;
   selftimermenu = false;
   adjustmenu = false;
-  float T = spvalues[ShutterSpeedIndex];      // get shutter speed from array
-  uint8_t Tdisplay = 0;                       // Flag for shutter speed display style (fractional, seconds, minutes)
-  double  Tfr = 0;                            // value for shutter speed fraction
-  float   Tmin = 0;                           // shutter speed in minutes, if over 60 seconds
-  if (T >= 60) {
-    Tdisplay = 0;                             // Exposure is in minutes
-    Tmin = T / 60;
 
-  } else if (T < 60 && T >= 0.6) {            // speed in seconds
-    Tdisplay = 2;                             // Exposure in in seconds
-
-  } else if (T < 0.6 && T > .01) {            // speed in fractions
-    Tdisplay = 1;                             // Display is in fractional form
-    Tfr = round(1 / T);
-  } else if ( T = .001) {
-    Tdisplay = 3;                             // Exposure is TIME
-  }
   // Start main display
   oled.clear();
   oled.set1X();
@@ -352,8 +359,47 @@ void refresh() {
   oled.print(F("Shutter"));
   oled.setCursor(0, 3);
   oled.print(F("Speed"));
+  refreshShutter(); 
+  showshutterstate(0);                // shutter is closed and ready
+
+  if(selftimer > 0) {                 // display self timer value if any
+  oled.setCursor(40, 4);
+  oled.print(F("|"));
+  oled.setCursor(40, 5);
+  oled.print(F("|"));    
+    oled.setCursor(0, 4);
+    oled.print(F("Self"));
+    oled.setCursor(0, 5);
+    oled.print(F("Timer"));
+    oled.set2X();
+    oled.setCursor(50, 4);
+    oled.print(selftimer);
+    oled.print(F(" sec"));
+  }
+  delay(buttondelay);
+}
+
+void refreshShutter(){
+  float T = spvalues[ShutterSpeedIndex];      // get shutter speed from array
+  uint8_t Tdisplay = 0;                       // Flag for shutter speed display style (fractional, seconds, minutes)
+  double  Tfr = 0;                            // value for shutter speed fraction
+  float   Tmin = 0;                           // shutter speed in minutes, if over 60 seconds
+  if (T >= 60) {
+    Tdisplay = 0;                             // Exposure is in minutes
+    Tmin = T / 60;
+
+  } else if (T < 60 && T >= 0.6) {            // speed in seconds
+    Tdisplay = 2;                             // Exposure in in seconds
+
+  } else if (T < 0.6 && T > .01) {            // speed in fractions
+    Tdisplay = 1;                             // Display is in fractional form
+    Tfr = round(1 / T);
+  } else if ( T = .001) {
+    Tdisplay = 3;                             // Exposure is TIME
+  }
   oled.set2X();
-  oled.set2X();
+  oled.setCursor(50, 2);
+  oled.print(F("       "));
   oled.setCursor(50, 2);
   if (Tdisplay == 0) {                // display shutter speed
     oled.print(Tmin, 1);              // in minutes
@@ -372,23 +418,10 @@ void refresh() {
   if (Tdisplay == 3) {                // or TIME
     oled.print(("TIME"));
   }
-  showshutterstate(0);                // shutter is closed and ready
-
-  if(selftimer > 0) {                 // display self timer value if any
-  oled.setCursor(40, 4);
-  oled.print(F("|"));
-  oled.setCursor(40, 5);
-  oled.print(F("|"));    
-    oled.setCursor(0, 4);
-    oled.print(F("Self"));
-    oled.setCursor(0, 5);
-    oled.print(F("Timer"));
-    oled.set2X();
-    oled.setCursor(50, 4);
-    oled.print(selftimer);
-    oled.print(F(" sec"));
-  }
+  if(!rotaryencoder){         // if a button is being used, delay
   delay(buttondelay);
+  }
+  rotaryencoder = false;      // clear rotary encoder use flag
 }
 
 // display shutter state on bottom line
@@ -456,6 +489,11 @@ pinMode(MinusButtonPin, INPUT_PULLUP);
 pinMode(ShutterButtonPin, INPUT_PULLUP);
 pinMode(MenuButtonPin, INPUT_PULLUP);
 pinMode(FlashSyncPin, OUTPUT);                // setup flash sync output to opto isolator
+pinMode(rotCLKPin, INPUT);
+pinMode(rotDTPin, INPUT);
+pinMode(rotButtonPin, INPUT_PULLUP);
+
+lastStateCLK = digitalRead(rotCLKPin);    // read last state of CLK
 
 Wire.begin();
 myservo.attach(servoPin);
@@ -502,6 +540,26 @@ refresh();  // display main screen
 void loop() {
 
 readButtons();                          // get button state
+
+currentStateCLK = digitalRead(rotCLKPin);     // read current state of rotary encoder CLK
+if(currentStateCLK != lastStateCLK && currentStateCLK ==1){
+  rotaryencoder = true;
+  if(digitalRead(rotDTPin) != currentStateCLK ){
+    PlusButtonState = 0;
+  } else {
+    MinusButtonState = 0;
+  }
+}
+lastStateCLK = currentStateCLK;
+
+btnState = digitalRead(rotButtonPin);             // read rotary encoder button
+if (btnState == LOW){
+  if (millis() - lastButtonPress > 50){
+    MenuButtonState = 0;
+  }
+  lastButtonPress = millis();
+}
+
 menu();                                 // do stuff with button press
 
 // shutter button pressed during self timer menu and the shutter is closed
