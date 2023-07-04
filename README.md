@@ -34,19 +34,26 @@ Nano:
 - D5: Shutter Switch
 - D6: Menu Switch
 - D9: Servo data
-- D10: (optional) 330 Ohm resistor + TLP127 Opto Isolator
+- D10: (optional) 330 Ohm resistor then to TLP127 Opto Isolator
 - A4: SDA on I2C SSD1306
-- A5: SDL on I2C SSD1306
-- 5V: 5V on I2C SSD1306 and power, can be as low as 2.5 volts
-- GND: GND on I2C SSD1306, GND on servo
+- A5: SCL on I2C SSD1306
+- 3.3V: VCC on I2C SSD1306
+- VIN: 7.5v (5 AA batteries), VCC on servo
+- GND: GND on I2C SSD1306, GND on servo, pin 3 on TLP127
 - D2: (optional) rotary encoder switch
 - D7: (optional) rotary encoder CLK
 - D8: (optional) rotary encoder DT
 
+SSD1306 OLED display:
+- SDA: A4 on Nano
+- SCL: A5 on Nano
+- GND: GND on Nano
+- VCC: 3.3v on Nano
+
 Servo:
 - Data: D9 on Nano
-- VCC: 6-8 volts separate power supply
-- GND: GND on power supply and Nano
+- VCC: VIN on Nano
+- GND: GND on Nano
 
 TLP127 Opto Isolator (optional):
 - Pin 1 (Anode): 330 Ohm resistor, then to D10
