@@ -1,7 +1,9 @@
 # Servo-Shutter
 A Servo operated 3D Printed Shutter for Arduino Nano
 
-This project was designed for a 3D printed servo operated leaf shutter and Arduino Nano. Being servo operated means the top shutter speed is limited to the speed of the servo motor. Since most 9g servos operate around 100ms, the shutter will be limited to around 1/8 second, which works for my purposes in exposing paper and lith negatives. 
+This project was designed for a 3D printed servo operated leaf shutter and Arduino Nano. Being servo operated means the top shutter speed is limited to the speed of the servo motor. Since most 9g servos operate around 100ms, the shutter will be limited to around 1/13 second, which works for my purposes in exposing paper and lith negatives. 
+
+The schematic can be used for this and other arduino projects that use 3 pin sensors. The zip file contains gerber files for PCB production. 
 
 Features: 
 
@@ -9,12 +11,12 @@ Features:
 - 4 button operation
 - optional rotary encoder capability
 - uses I2C 128x64 SSD1306 display
-- shutter speeds from 1/8 to 10 minutes
+- shutter speeds from 1/13 to 10 minutes (coded down to 1/20 but blades may not open fully)
 - cancelable self timer up to 255 seconds
 - built in servo adjustments for Shutter Open, Close, and relief angles, as well as servo delay
 - adjustable button repeat rate delay
 - X or M flash sync (electronic flash for now)
-- Operates on 6 volts (4AA) for the servo, and 3 volts for the arduino
+- Operates on 6 volts (4AA) for the servo, and 7.4 volts for the arduino. The arduino will run with as little as 3 volts.
 
 Requirements:
 
@@ -38,7 +40,7 @@ Nano:
 - A4: SDA on I2C SSD1306
 - A5: SCL on I2C SSD1306
 - 3.3V: VCC on I2C SSD1306
-- VIN: 7.5v (5 AA batteries), VCC on servo
+- VIN: 7.5v (5 AA or 2 LiPo batteries)
 - GND: GND on I2C SSD1306, GND on servo, pin 3 on TLP127
 - D2: (optional) rotary encoder switch
 - D7: (optional) rotary encoder CLK
@@ -52,7 +54,7 @@ SSD1306 OLED display:
 
 Servo:
 - Data: D9 on Nano
-- VCC: VIN on Nano
+- VCC: 6-7 volts on separate battery from Nano
 - GND: GND on Nano
 
 TLP127 Opto Isolator (optional):
