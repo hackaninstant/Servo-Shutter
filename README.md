@@ -1,7 +1,7 @@
 # Servo-Shutter
 A Servo operated 3D Printed Shutter for Arduino Nano
 
-This project was designed for a 3D printed servo operated leaf shutter and Arduino Nano. Being servo operated means the top shutter speed is limited to the speed of the servo motor. Since most 9g servos operate around 100ms, the shutter will be limited to around 1/13 second, which works for my purposes in exposing paper and lith negatives. 
+This project was designed for a 3D printed servo operated leaf shutter and Arduino Nano. Being servo operated means the top shutter speed is limited to the speed of the servo motor. Since most 9g servos operate around 100ms, the shutter will be limited to around 1/10 second fully open. Faster speeds can be added, but the shutter won't open completely, which should work fine for smaller apertures.
 
 The schematic can be used for this and other arduino projects that use 3 pin sensors. The zip file contains gerber files for PCB production. 
 
@@ -69,6 +69,8 @@ Rotary Encoder (optional):
 - CLK: Pin D7 on Nano
 - DT: Pin D8 on Nano
 - SW: Pin 02 on Nano
+
+Separate power supplies for servo/arduino is the easiest way to deal with servo noise and the arduino. If you are successful in using a capacitor to reduce erratic arduino behaviour, please share that info here. (I tried a 330mF from servo VCC to gnd and it didn't help)
 
 This project uses the SSD1306ASCII.h library for the display since graphics aren't needed and the libraries are smaller. The code is easily configurable to different pin layouts and servo angle defaults and is documented for modification. The TLP127 was selected since it can handle 300v which some older electronic flashes use for flash sync. The TLP127 lets enough current through for an electronic flash, but would need an additional transistor to let enough current through for a flashbulb. 
 
