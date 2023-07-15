@@ -5,6 +5,8 @@ This project was designed for a 3D printed servo operated leaf shutter and Ardui
 
 The schematic can be used for this and other arduino projects that use 3 pin sensors. The zip file contains gerber files for PCB production. 
 
+An overview, assembly, and features are demonstrated on youtube: https://www.youtube.com/watch?v=IbccD1TD0Z8
+
 Features: 
 
 - small footprint: will work with Nano Mega 168 boards
