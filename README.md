@@ -20,7 +20,7 @@ Features:
 
 Requirements:
 
-- 3D printed servo operated shutter from https://www.thingiverse.com/thing:6033871
+- 3D printed servo operated shutter from https://www.thingiverse.com/thing:6033871 (or available here)
 - Arduino Nano, 16K or 32K version
 - 4 momentary switches
 - I2C SSD1306 128x64 display
@@ -93,7 +93,7 @@ While in the shutter adjust menu, pressing the shutter button will select betwee
 2. Shutter Open is the angle of the servo with the shutter open
 3. Shutter Relief is the angle the servo backs off after opening or closing the shutter. This is to prevent the servo from vibrating if the shutter is stiff
 4. Button Delay is the value in milliseconds of how fast the buttons repeat if held down. This does not affect the rotary encoder. 
-5. Servo Delay is the value in milliseconds it takes to fully open the shutter. This value is subtracted from the shutter speed and used to calculate the flash sync. It cannot be higher than the fastest shutter speed (default 125ms, or 1/8 second).  
+5. Servo Delay is the value in milliseconds it takes to fully open the shutter. This value is subtracted from the shutter speed and used to calculate the flash sync, unless this value is higher than the shutter speed in milliseconds.   
 6. Flash Sync X is 0, meaning the flash will go off when the shutter is completely open. Flash Sync M is 20, which will be subtracted from the servo delay to fire the flash 20ms before the shutter is completely open. 
 
 These fine adjustments enable you to tweak the servo settings without having to modify the code and upload it from a computer since it's difficult to perfectly install the servo at the exact angle, and the relief angle can help reduce strain on the servo if the shutter is stiff. 
