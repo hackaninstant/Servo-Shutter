@@ -28,12 +28,12 @@ Servo myservo;
 
 boolean PlusButtonState;                // "+" button state
 boolean MinusButtonState;               // "-" button state
-boolean ShutterButtonState;            // Metering button state
+boolean ShutterButtonState;             // Metering button state
 boolean MenuButtonState;                // menu button state
 
-boolean mainscreen = true;            // indicates which screen displayed
-boolean selftimermenu = false;
-boolean adjustmenu = false;
+boolean mainscreen = true;              // indicates which screen displayed
+boolean selftimermenu = false;          // indicates self timer menu active
+boolean adjustmenu = false;             // indicates settings menu active
 
 // EEPROM for memory recording
 #define ShutterSpeedAddr        1
@@ -48,8 +48,8 @@ boolean adjustmenu = false;
 #define defaultShutterOpen      68        // shutter open angle
 #define defaultShutterClose     0         // shutter close angle
 #define defaultShutterRelief    4         // angle that servo backs off after opening/closing
-#define defaultButtonDelay      100       // button repeat delay
-#define defaultShutterSpeedIndex 10       // default shutter spped
+#define defaultButtonDelay      200       // button repeat delay
+#define defaultShutterSpeedIndex 10       // default shutter speed
 #define defaultServoDelay       100       // time it takes to completely open shutter
 #define defaultFlashSync        0         // 0 = X, 20 = M, amount to subtract from ServoDelay for flash syne
 #define MaxShutterIndex         49        // matches number of items in spvalues
@@ -63,19 +63,20 @@ uint8_t buttondelay =         EEPROM.read(ButtonDelayAddr);
 uint8_t ServoDelay =          EEPROM.read(ServoDelayAddr);
 uint8_t FlashSync =           EEPROM.read(FlashSyncAddr);
 
-int ShutterState = 0;   //closed
-int selftimer = 0;      // self time in seconds
-int adjustmenuitem = 1;  // selected adjust menu item
-float voltage = 0;      // for storing voltage of battery
+int ShutterState = 0;                // closed
+int selftimer = 0;                   // self time in seconds
+int adjustmenuitem = 1;              // selected adjust menu item
+float voltage = 0;                   // for storing voltage of battery
 
-int rotcounter = 0;      // counter for rotary enocoder
-int currentStateCLK;
-int lastStateCLK;
-unsigned long lastButtonPress = 0;
-int btnState;
-boolean rotaryencoder = false; 
+int rotcounter = 0;                  // counter for rotary enocoder
+int currentStateCLK;                 // for rotary encoder
+int lastStateCLK;                     // for rotary encoder
+unsigned long lastButtonPress = 0;    // for rotary encoder
+int btnState;                         // for rotary encoder
+boolean rotaryencoder = false;        // for rotary encoder
 
-// Shutter speed values in seconds. .001 = TIME setting. If you add/delete, modify MaxShutterIndex
+// Shutter speed values in seconds. 700 = TIME setting. If you add/delete, modify MaxShutterIndex
+// shutter speeds faster than the servo speed will not open the shutter completely
 float spvalues[] = {.05, .067, .08, .1, .125, .150, .200, .250, .300, .400, .500, .600, .800, 1.000, 1.250, 1.500, 2.000, 2.500, 3.000, 4.000, 5.000, 6.000, 7.000, 8.000, 9, 10, 11, 12, 13, 14, 15.00, 20.00, 25.00, 30.00, 35.00, 40.00, 45.00, 60.00, 90.00, 120.0, 150.0, 180.0, 240.0, 300.0, 360.0, 420.0, 480.0, 540.0, 600.0, 700};
 
 // Store settings
@@ -143,14 +144,14 @@ void menu() {
      if(ShutterSpeedIndex == 0) {
       ShutterSpeedIndex = MaxShutterIndex;
     } else {
-     ShutterSpeedIndex--;               // decrease shutter speed time
+     ShutterSpeedIndex--;                 // decrease shutter speed time
     }
-    refreshShutter();
+    refreshShutter();                     // display shutter speed
     SaveSettings();
    }  
   }
 
-// get fastest shutter speed delay to make sure servodelay stays below that value
+
   float shutterdelay = spvalues[1];
   shutterdelay = shutterdelay * 1000;        // time in milliseconds
 
@@ -158,37 +159,37 @@ void menu() {
   // First check for adjustmenu & PlusButtonState states. 
   // var adjustmenu must exist
   // int PlusButtonState 0 or 1
-  if(adjustmenu && PlusButtonState == 0) {
+  if(adjustmenu && PlusButtonState == 0) {    // plus button pressed
     // Now Switch check on adjustmenuitem
     // int adjustmenuitem 1-6
     switch(adjustmenuitem) {
-      case(1):
+      case(1):                            // Servo angle for open shutter
         ShutterOpen++;
-        clearadjustitem(1);
-        oled.print(ShutterOpen);
-        break;
-      case(2):
+        clearadjustitem(1);               // erase value on screen for open angle
+        oled.print(ShutterOpen);          // display new value for open angle
+        break;                            // done
+      case(2):                            // Servo angle for close shutter
         ShutterClose++;
         clearadjustitem(2);
         oled.print(ShutterClose);
         break;
-      case(3):
-        ShutterRelief++;
+      case(3):                            // servo relief angle
+        ShutterRelief++;  
         clearadjustitem(3);
         oled.print(ShutterRelief);
         break;
-      case(4):
+      case(4):                            // button delay in milliseconds
         buttondelay = buttondelay + 10;
         clearadjustitem(4);
         oled.print(buttondelay);
         break;
-      case(5):
+      case(5):                            // servo delay (time it takes to fully open shutter)
         ServoDelay++;
         clearadjustitem(5);
         oled.print(ServoDelay);
         break;
         
-      case(6):
+      case(6):                            // flash sync X or M
         clearadjustitem(6);
         if (FlashSync == 0) {
           FlashSync = 20; 
@@ -199,7 +200,7 @@ void menu() {
           break;
         }
     }
-  } else if(adjustmenu && MinusButtonState == 0) {
+  } else if(adjustmenu && MinusButtonState == 0) {    // minus button pressed
     // Now Switch check on adjustmenuitem
     // int adjustmenuitem 1-6
     switch(adjustmenuitem) {
@@ -245,15 +246,15 @@ void menu() {
   }
 }
 // clear and get ready to display adjust value
-void clearadjustitem(int adjust) {
+void clearadjustitem(int adjust) {    // erase adjust parameter on screen
   oled.setCursor(94, adjust + 1);
-  oled.print(F("    "));
-  oled.setCursor(94, adjust + 1);
-  SaveSettings();
-  if(!rotaryencoder){
-  delay(buttondelay);
+  oled.print(F("    "));              // display spaces
+  oled.setCursor(94, adjust + 1);     // reset the cursor to print the value
+  SaveSettings();                     // save settings
+  if(!rotaryencoder){                 // if the buttons were used
+  delay(buttondelay);                 // wait for button delay time for repeat rate
   }
-  rotaryencoder = false;
+  rotaryencoder = false;              // reset flag
 }
 
 // display self timer menu
@@ -268,16 +269,16 @@ void showtimermenu() {
   showtimervalue();
 }
 
-void showtimervalue() {
+void showtimervalue() {           // show self timer value
   oled.set2X();
   oled.setCursor(25, 3);
-  oled.print(F("      "));
+  oled.print(F("      "));        // clear line
   oled.setCursor(25, 3);
   if(selftimer == 0) {            // self timer not active
     oled.print(F("OFF"));
   } else {
   oled.print(selftimer);          // show self timer value
-  oled.print(F(" sec"));
+  oled.print(F(" sec"));          // in seconds
   }
   if(!rotaryencoder){
   delay(buttondelay);             // button repeat rate
@@ -285,7 +286,7 @@ void showtimervalue() {
   rotaryencoder = false; 
 }
 // display shutter adjust menu
-void showadjustmenu() {
+void showadjustmenu() {            // settings menu
   mainscreen = false;
   selftimermenu = false;
   adjustmenu = true;
@@ -378,7 +379,7 @@ void refresh() {
   delay(buttondelay);
 }
 
-void refreshShutter(){
+void refreshShutter(){                        // display just shutter speed 
   float T = spvalues[ShutterSpeedIndex];      // get shutter speed from array
   uint8_t Tdisplay = 0;                       // Flag for shutter speed display style (fractional, seconds, minutes)
   double  Tfr = 0;                            // value for shutter speed fraction
@@ -398,8 +399,8 @@ void refreshShutter(){
   }
   oled.set2X();
   oled.setCursor(50, 2);
-  oled.print(F("       "));
-  oled.setCursor(50, 2);
+  oled.print(F("       "));           // clear old shutter speed
+  oled.setCursor(50, 2);              // reset cursor 
   if (Tdisplay == 0) {                // display shutter speed
     oled.print(Tmin, 1);              // in minutes
     oled.print(F("m"));
@@ -488,19 +489,19 @@ pinMode(MinusButtonPin, INPUT_PULLUP);
 pinMode(ShutterButtonPin, INPUT_PULLUP);
 pinMode(MenuButtonPin, INPUT_PULLUP);
 pinMode(FlashSyncPin, OUTPUT);                // setup flash sync output to opto isolator
-pinMode(rotCLKPin, INPUT);
+pinMode(rotCLKPin, INPUT);                    // setup rotary encoder
 pinMode(rotDTPin, INPUT);
-pinMode(rotButtonPin, INPUT_PULLUP);
+pinMode(rotButtonPin, INPUT_PULLUP);          // setup rotary encoder switch
 
-lastStateCLK = digitalRead(rotCLKPin);    // read last state of CLK
+lastStateCLK = digitalRead(rotCLKPin);        // read last state of CLK on rotary encoder
 
 Wire.begin();
-myservo.attach(servoPin);
-oled.begin(&Adafruit128x64, I2C_ADDRESS);
-oled.setFont(Adafruit5x7);
+myservo.attach(servoPin);                     // setup servo output
+oled.begin(&Adafruit128x64, I2C_ADDRESS);     // setup oled address
+oled.setFont(Adafruit5x7);                    // setup oled font
 myservo.write(ShutterOpen);                   // open shutter for viewing, focusing
-delay(200);
-myservo.write(ShutterOpen - ShutterRelief);  // back off to relieve stress on servo
+delay(200);                                   // wait 200ms
+myservo.write(ShutterOpen - ShutterRelief);   // back off to relieve stress on servo
 ShutterState = 1;                             // shutter open
 
 // load defaults if first time running
@@ -538,24 +539,23 @@ refresh();  // display main screen
 
 void loop() {
 
-readButtons();                          // get button state
+readButtons();                                // get button state
 
-currentStateCLK = digitalRead(rotCLKPin);     // read current state of rotary encoder CLK
-// if(currentStateCLK != lastStateCLK && currentStateCLK == HIGH ){
+currentStateCLK = digitalRead(rotCLKPin);     // read current state of rotary encoder
 if(lastStateCLK == LOW && currentStateCLK == HIGH){
   rotaryencoder = true;
   if(digitalRead(rotDTPin) == HIGH ){
-    MinusButtonState = 0;
+    MinusButtonState = 0;                     // translate it to button state
   } else {
     PlusButtonState = 0;
   }
 }
-lastStateCLK = currentStateCLK;
+lastStateCLK = currentStateCLK;               // wait until next event from encoder
 
 btnState = digitalRead(rotButtonPin);             // read rotary encoder button
 if (btnState == LOW){
   if (millis() - lastButtonPress > 50){
-    MenuButtonState = 0;
+    MenuButtonState = 0;                      // translate encoder switcht to menu push
   }
   lastButtonPress = millis();
 }
@@ -572,7 +572,7 @@ if(!ShutterButtonState && selftimermenu && ShutterState == 0) {
     delay(200);                         // wait until shutter opens
     myservo.write(ShutterOpen - ShutterRelief);
     ShutterState = 1;
-    showshutterstate(3);    // open shutter for focus
+    showshutterstate(3);                // open shutter for focus
 }
 
 // shutter button pressed during adjust menu
@@ -591,81 +591,83 @@ if(!ShutterButtonState && adjustmenu) {
   oled.print(F("*"));                         // Item selection indicator
 }
 
-// shutter button pressed
+// Main routine: shutter button pressed
 if(!ShutterButtonState) {
-  boolean abort = false;
-  if(ShutterState == 1) {           // If the shutter is open, close it
+  boolean abort = false;                         // setup self timer abort variable
+  if(ShutterState == 1) {                        // If the shutter is open, close it
     myservo.write(ShutterClose);
-    delay(200);
-    myservo.write(ShutterClose + ShutterRelief);
-    ShutterState = 0;
-    showshutterstate(ShutterState);
-  } else {                   // If the shutter is closed
-   abort = useselftimer(selftimer);  // go to self timer routine
-   if (!abort) {                      // if self timer hasn't been aborted
-   float shutterdelay = spvalues[ShutterSpeedIndex];
-   int shutterseq = 1;                        // normal flash sync shutter operation
-    if (shutterdelay > 600){
-      shutterseq = 4;                         // TIME, no flash
-    } else if (shutterdelay > 1 && shutterdelay < 700) {
-      shutterseq = 2;                         // shutter sequence with relief angle
+    delay(200);                                   // wait .2 sec
+    myservo.write(ShutterClose + ShutterRelief);  // relieve servo stress 
+    ShutterState = 0;                             // 0 = closed
+    showshutterstate(ShutterState);               // indicate on status line on oLED
+  } else {                                        // If the shutter is closed
+   abort = useselftimer(selftimer);                // go to self timer routine and count down
+   if (!abort) {                                   // if self timer hasn't been aborted
+   float shutterdelay = spvalues[ShutterSpeedIndex];  // get shutter speed in seconds
+   int shutterseq = 1;                            // normal flash sync shutter operation (default)
+    if (shutterdelay > 600){                      // if shutter speed is greater than max (10 min)
+      shutterseq = 4;                              // TIME, no flash
+    } else if (shutterdelay > 1 && shutterdelay < 700) {  // if shutter speed is slower than 1 second
+      shutterseq = 2;                              // shutter sequence with servo relief
     }
-   shutterdelay = shutterdelay * 1000;        // time in milliseconds
-    if (shutterdelay > ServoDelay){
-     shutterdelay = shutterdelay - ServoDelay;  // subtract flashsync time from total
+   shutterdelay = shutterdelay * 1000;            // convert time in milliseconds
+    if (shutterdelay > ServoDelay){               // if shutter speed is slower than servo delay
+     shutterdelay = shutterdelay - ServoDelay;    // subtract flashsync time from total
     } else {
-      shutterseq = 3;                          // fire the flash after shutter delay
+      shutterseq = 3;                            // shutter speed faster than servo delay: fire the flash after shutter delay
     }
-   ShutterState = 1;                          // show shutter open
+   ShutterState = 1;                             // show shutter open
    showshutterstate(ShutterState);
-   switch(shutterseq){                     // choose shutter operation
-    case(1):
-     myservo.write(ShutterOpen);
-     delay(ServoDelay - FlashSync);    // wait until flash sync delay
-     digitalWrite(FlashSyncPin, HIGH);   // activate opto isolator for flash 
-     delay(FlashSync);                 // delay the rest of the time to add up to ServoDelay
-     delay(shutterdelay);             // keep shutter open for rest of time
-     digitalWrite(FlashSyncPin, LOW); // turn off flash sync
-     break;
-     case(2):
-      myservo.write(ShutterOpen);    // open shutter
-      delay(ServoDelay - FlashSync);
-      digitalWrite(FlashSyncPin, HIGH);
-      delay(FlashSync);
-      delay(50);
-      digitalWrite(FlashSyncPin, LOW);
-      myservo.write(ShutterOpen - ShutterRelief);
-      delay(shutterdelay - 50);
-      break;
-     case(3):
-      myservo.write(ShutterOpen);
-      delay(shutterdelay);                              
-      digitalWrite(FlashSyncPin, HIGH);
-      break;
-     case(4):
-      myservo.write(ShutterOpen);
-      delay(200);
-      myservo.write(ShutterOpen - ShutterRelief);
-      delay(100);
-     readButtons();                              // clear button state
-      while(ShutterButtonState) {                 // as long as shutter button isn't pressed, keep open
+   // these case statements make shutter operations redundant between cases. Since shutter timing is critical, each shutter sequence is done in its own case, to avoid conditionals and possible delays during shutter operation
+   switch(shutterseq){                          // choose shutter operation based on shutterseq
+    case(1):                                    // normal shutter operation
+      myservo.write(ShutterOpen);               // open shutter
+      delay(ServoDelay - FlashSync);            // wait until flash sync delay
+      digitalWrite(FlashSyncPin, HIGH);         // activate opto isolator for flash 
+      delay(FlashSync);                         // delay the rest of the time to add up to ServoDelay
+      delay(shutterdelay);                      // keep shutter open for rest of time
+      digitalWrite(FlashSyncPin, LOW);          // turn off flash sync
+      break;                                    // done
+    case(2):                                    // shutter longer than 1 second
+      myservo.write(ShutterOpen);               // open shutter
+      delay(ServoDelay - FlashSync);            // wait until blades are open
+      digitalWrite(FlashSyncPin, HIGH);         // activate opto isolator for flash
+      delay(FlashSync);                         // wait until the rest of the flash sync time
+      delay(50);                                // and an additional 50ms for good measure for flash
+      digitalWrite(FlashSyncPin, LOW);          // turn off flash
+      myservo.write(ShutterOpen - ShutterRelief); // relieve stress on servo
+      delay(shutterdelay - 50);                 // keep shutter open the rest of the duration
+      break;                                    // done
+    case(3):                                    // shutter speed faster than servo delay (for high shutter speeds where blades don't completely open)
+      myservo.write(ShutterOpen);               // open shutter
+      delay(shutterdelay);                      // wait for duration of shutter time
+      digitalWrite(FlashSyncPin, HIGH);         // fire flash
+      break;                                    // done
+    case(4):                                    // TIME
+      myservo.write(ShutterOpen);               // open shutter
+      delay(200);                               // wait 200 ms
+      myservo.write(ShutterOpen - ShutterRelief); // relieve stress on servo
+      delay(100);                                // wait 100ms
+      readButtons();                             // clear button state
+      while(ShutterButtonState) {                // as long as shutter button isn't pressed, keep open
        readButtons();                           // wait here until shutter button pressed. 
       }
-     break;
-   }
-   myservo.write(ShutterClose);
-   digitalWrite(FlashSyncPin, LOW);
-   delay(200);
-   myservo.write(ShutterClose + ShutterRelief);
-   ShutterState=0;
-   showshutterstate(ShutterState);
+     break;                                     // done
+   }                                            // finished with shutter sequence
+   myservo.write(ShutterClose);                 // close shutter
+   digitalWrite(FlashSyncPin, LOW);             // turn off flash
+   delay(200);                                  // wait 200ms
+   myservo.write(ShutterClose + ShutterRelief); // relieve stress on shutter
+   ShutterState=0;                              // shutter closed
+   showshutterstate(ShutterState);              // show shutter on status line
   }
-  while (!ShutterButtonState) {       // as long as the shutter button is pressed...
-    delay(100);                       // wait another 100 ms
-    readButtons();                    // then read the buttons again
+  // wait until shutter button is released
+  while (!ShutterButtonState) {                  // as long as the shutter button is pressed...
+    delay(100);                                  // wait another 100 ms
+    readButtons();                                // then read the buttons again
   }
 
-  refresh();
+  refresh();                                      // refresh the display
  }
 }
 }
